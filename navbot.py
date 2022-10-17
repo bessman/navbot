@@ -13,9 +13,17 @@ class Steering:
         self.right_motor = right_motor
         self.left_motor = left_motor
 
-    def turn(self, duty_cycle=50):
+    def turn_in_place(self, duty_cycle=50):
         self.right_motor.forward(duty_cycle)
         self.left_motor.backward(duty_cycle)
+
+    def curve_left(self, duty_cycle=50):
+        self.right_motor.forward(duty_cycle)
+        self.left_motor.forward(duty_cycle / 2)
+
+    def curve_right(self, duty_cycle=50):
+        self.right_motor.forward(duty_cycle / 2)
+        self.left_motor.forward(duty_cycle)
 
     def forward(self, duty_cycle=50):
         self.right_motor.forward(duty_cycle)
@@ -87,27 +95,34 @@ class Robot:
             print("No target")
 
     def drive_to(
-        self, latitude, longitude, drive_duty=50, turn_duty=20, tolerance=0.02
+        self,
+        latitude,
+        longitude,
+        duty_cycle=50,
+        goal=0.02,
+        track_tolerance=5,
     ):
         self.target = coordinates(latitude, longitude)
         distance, bearing = self.get_distance_and_bearing()
-        while distance > tolerance:
-            self._face_target(duty_cycle=turn_duty)
-            self.steering.forward(duty_cycle=drive_duty)
-            print(f"Driving toward target, {distance} remaining")
+        while distance > goal:
+            track = self.navigation.track
+            angle_to_target = track - bearing
+
+            if angle_to_target > track_tolerance:
+                print(f"Turning left from {track} toward {bearing}")
+                self.steering.curve_left(duty_cycle)
+            elif angle_to_target < -track_tolerance:
+                print(f"Turning left from {track} toward {bearing}")
+                self.steering.curve_right(duty_cycle)
+            else:
+                print("Heading straight (track {track} vs. bearing {bearing})")
+                self.steering.forward(duty_cycle)
+
+            print(f"{distance} to target")
             sleep(10)  # Drive for 10 seconds, then course correct.
             # The drive time will probably need to be adjusted based on distance to target.
         self.steering.stop()
         print("You have arrived.")
-
-    def _face_target(self, tolerance=5, duty_cycle=20):
-        _, bearing = self.get_distance_and_bearing()
-        while abs(self.navigation.track - bearing) > tolerance:
-            print(f"Turning from {self.navigation.track} toward {bearing}")
-            self.steering.turn(duty_cycle)
-            sleep(0.05)
-            _, bearing = self.get_distance_and_bearing()
-        self.steering.stop()
 
 
 left_motor = L298NMDc(6, 13, 18, name="left")
