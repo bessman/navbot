@@ -86,23 +86,25 @@ class Robot:
         else:
             print("No target")
 
-    def drive_to(self, latitude, longitude):
+    def drive_to(
+        self, latitude, longitude, drive_duty=50, turn_duty=20, tolerance=0.02
+    ):
         self.target = coordinates(latitude, longitude)
         distance, bearing = self.get_distance_and_bearing()
-        while distance > 0.02:
-            self._face_target()
-            self.steering.forward()
+        while distance > tolerance:
+            self._face_target(duty_cycle=turn_duty)
+            self.steering.forward(duty_cycle=drive_duty)
             print(f"Driving toward target, {distance} remaining")
             sleep(10)  # Drive for 10 seconds, then course correct.
             # The drive time will probably need to be adjusted based on distance to target.
         self.steering.stop()
         print("You have arrived.")
 
-    def _face_target(self):
+    def _face_target(self, tolerance=5, duty_cycle=20):
         _, bearing = self.get_distance_and_bearing()
-        while abs(self.navigation.track - bearing) > 5:
+        while abs(self.navigation.track - bearing) > tolerance:
             print(f"Turning from {self.navigation.track} toward {bearing}")
-            self.steering.turn(duty_cycle=20)
+            self.steering.turn(duty_cycle)
             sleep(0.05)
             _, bearing = self.get_distance_and_bearing()
         self.steering.stop()
