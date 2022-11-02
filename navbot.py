@@ -105,6 +105,7 @@ class Robot:
         self.target = coordinates(latitude, longitude)
         distance, bearing = self.get_distance_and_bearing()
         while distance > goal:
+            distance, bearing = self.get_distance_and_bearing()
             track = self.navigation.track
             angle_to_target = track - bearing
 
