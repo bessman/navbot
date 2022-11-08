@@ -116,7 +116,7 @@ class Robot:
                 print(f"Turning left from {track} toward {bearing}")
                 self.steering.curve_right(duty_cycle)
             else:
-                print("Heading straight (track {track} vs. bearing {bearing})")
+                print(f"Heading straight (track {track} vs. bearing {bearing})")
                 self.steering.forward(duty_cycle)
 
             print(f"{distance} to target")
